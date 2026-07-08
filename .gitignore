@@ -29,6 +29,15 @@ next-env.d.ts
 # Vercel
 .vercel
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+.python-version
+
+# Runtime data (conversation memory)
+memory/
+
 # Editor
 .idea/
 .vscode/
