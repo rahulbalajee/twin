@@ -41,3 +41,7 @@ memory/
 # Editor
 .idea/
 .vscode/
+
+# Deployment
+lambda-package/
+lambda-deployment.zip
