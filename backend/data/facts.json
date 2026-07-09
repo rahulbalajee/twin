@@ -1,0 +1,124 @@
+{
+  "full_name": "Rahul Balajee",
+  "name": "Rahul",
+  "current_role": "AI Platform Engineer",
+  "location": "Pondicherry, India",
+  "email": "rahulbalajee.97@gmail.com",
+  "linkedin": "linkedin.com/in/rahulbalajee",
+  "github": "github.com/rahulbalajee",
+  "open_to_relocation": true,
+  "summary": "Backend and platform engineer with 5+ years of experience building secure, cloud-native distributed systems using Go, Python, FastAPI, Kubernetes, AWS, and GCP. Skilled in platform APIs, observability, automation, developer tooling, and AI-assisted engineering workflows. Improved platform reliability and reduced MTTR by ~30% at Brightcove.",
+  "years_experience": 5.5,
+  "specialties": [
+    "AI Platform Engineering",
+    "Software Development",
+    "System Design",
+    "Golang",
+    "Cloud Computing",
+    "DevOps",
+    "Python",
+    "Infrastructure Engineering",
+    "AWS",
+    "Linux",
+    "Docker",
+    "Kubernetes",
+    "Terraform",
+    "CI/CD",
+    "Git",
+    "GitHub"
+  ],
+  "skills": {
+    "backend_engineering": [
+      "Distributed systems",
+      "Event-driven architecture",
+      "FastAPI",
+      "Go",
+      "gRPC",
+      "Microservices",
+      "OAuth2",
+      "PostgreSQL",
+      "Python",
+      "Redis",
+      "REST APIs"
+    ],
+    "platform_engineering": [
+      "API Gateway",
+      "Argo CD",
+      "AWS",
+      "Docker",
+      "GCP",
+      "GitHub Actions",
+      "GitOps",
+      "Helm",
+      "Kubernetes",
+      "Service mesh",
+      "Terraform"
+    ],
+    "ml_ai_platform": [
+      "AI-assisted debugging",
+      "Developer tooling",
+      "Internal engineering platforms",
+      "LangChain",
+      "LLM tooling",
+      "Platform APIs"
+    ],
+    "observability_reliability": [
+      "CloudWatch",
+      "Datadog",
+      "Grafana",
+      "Incident response",
+      "Jaeger",
+      "OpenTelemetry",
+      "PagerDuty",
+      "Prometheus"
+    ],
+    "security": [
+      "API security",
+      "Application security",
+      "OWASP Top 10",
+      "RBAC",
+      "Secure coding",
+      "Threat modeling"
+    ]
+  },
+  "work_experience": [
+    {
+      "company": "Brightcove",
+      "period": "01/2021 - Present",
+      "location": "Remote",
+      "roles": [
+        {
+          "title": "Senior Systems Engineer - Go Backend / Platform Engineering",
+          "highlights": [
+            "Designed and built event-driven Go microservices for a live monitoring platform supporting high-traffic global streaming events, improving scalability, reliability, and failure isolation across distributed production systems.",
+            "Built an AI-powered troubleshooting platform using Python and FastAPI, integrating Slack, internal backend APIs, cloud provider APIs, and LangChain to autonomously investigate incidents, correlate signals, and identify probable root causes.",
+            "Built secure REST and gRPC platform APIs using hexagonal architecture, Kubernetes RBAC, API Gateway integrations, and service mesh networking to support safe service-to-service communication.",
+            "Applied Go concurrency patterns, pub/sub messaging, worker pools, retries, and orchestration workflows to improve resilience across asynchronous backend services.",
+            "Developed internal CLI tooling in Go using Cobra and urfave, used across 1000+ multi-tenant environments, improving engineering productivity by 40% and reducing operational friction for internal teams.",
+            "Deployed and operated Kubernetes workloads across AWS EKS and GCP GKE using Helm, Terraform, GitHub Actions, and Argo CD GitOps pipelines, improving release consistency and platform reliability.",
+            "Established observability and incident response workflows using OpenTelemetry, Datadog, Prometheus, Grafana, Jaeger, CloudWatch, and PagerDuty, improving production visibility and reducing MTTR by ~30%.",
+            "Integrated AI-assisted engineering tools including Claude Code, Cursor IDE, ChatGPT, and MCP connectors to analyze logs, review codebases, accelerate debugging, and improve documentation workflows."
+          ]
+        },
+        {
+          "title": "Systems Engineer - Backend / Cloud Platform",
+          "highlights": [
+            "Built a Go-based authentication and user management service integrating OAuth2, PostgreSQL, Redis caching, and token-based session handling for secure multi-tenant APIs.",
+            "Migrated legacy Jenkins pipelines to GitHub Actions and Terraform-based Infrastructure as Code, improving deployment consistency, release velocity, and operational security.",
+            "Designed and supported a multi-CDN orchestration platform using Akamai GTM, Fastly, Google Media CDN, Limelight, and CloudFront, supporting over 10M concurrent viewers during major live events.",
+            "Developed CloudWatch dashboards, automation scripts, and Kubernetes monitoring workflows to improve infrastructure utilization, production visibility, and incident response.",
+            "Led migration of engineering documentation into a centralized mono-repo, improving onboarding efficiency and increasing documentation update speed by ~45%."
+          ]
+        }
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "B.Tech in Electronics Engineering",
+      "institution": "Pondicherry University",
+      "location": "Puducherry, India",
+      "period": "06/2015 - 04/2019"
+    }
+  ]
+}
