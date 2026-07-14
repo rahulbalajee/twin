@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
-from openai import AsyncOpenAI
 import os
 from dotenv import load_dotenv
 from typing import Optional, List, Dict
@@ -38,15 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise RuntimeError("OPENAI_API_KEY is not set")
+bedrock_client = boto3.client(
+    service_name="bedrock-runtime",
+    region_name=os.getenv("BEDROCK_REGION") or os.getenv("AWS_REGION") or "ap-south-1",
+)
 
-client = AsyncOpenAI(api_key=api_key)
-
-model = os.getenv("OPENAI_MODEL")
-if not model:
-    raise RuntimeError("OPENAI_MODEL is not set")
+bedrock_model_id = os.getenv("BEDROCK_MODEL_ID")
+if not bedrock_model_id:
+    raise RuntimeError("BEDROCK_MODEL_ID is not set")
 
 base_dir = Path(__file__).resolve().parent
 
@@ -70,7 +68,6 @@ def load_conversation(session_id: str) -> List[Dict]:
             response = s3_client.get_object(
                 Bucket=s3_bucket,
                 Key=get_memory_key(session_id),
-                RequestPayer="requester",
             )
             return json.loads(response["Body"].read().decode("utf-8"))
         except s3_client.exceptions.NoSuchKey:
@@ -120,12 +117,48 @@ class ChatResponse(BaseModel):
     session_id: str
     is_new_session: bool
 
+HISTORY_LIMIT = 50  # messages sent to the model per request, not a storage cap
+MAX_TOKENS = 2000
+TEMPERATURE = 0.7
+TOP_P = 0.9
+
+def call_bedrock(conversation: List[Dict], user_message: str) -> str:
+    recent = conversation[-HISTORY_LIMIT:]
+    # Bedrock requires the window to open on a user turn — drop any orphaned
+    # assistant messages exposed by the cut
+    while recent and recent[0]["role"] != "user":
+        recent.pop(0)
+
+    messages = [
+        {"role": message["role"], "content": [{"text": message["content"]}]}
+        for message in recent
+    ]
+    messages.append({"role": "user", "content": [{"text": user_message}]})
+
+    try:
+        response = bedrock_client.converse(
+            modelId=bedrock_model_id,
+            system=[{"text": prompt()}],
+            messages=messages,
+            inferenceConfig={
+                "maxTokens": MAX_TOKENS,
+                "temperature": TEMPERATURE,
+                "topP": TOP_P,
+            },
+        )
+    except bedrock_client.exceptions.ThrottlingException:
+        raise HTTPException(status_code=429, detail="Too many requests, please try again shortly")
+
+    content_blocks = response["output"]["message"]["content"]
+    return "".join(block.get("text", "") for block in content_blocks)
+
 @app.get("/")
 async def root():
     return {
         "message": "AI Digital Twin API",
         "memory_enabled": True,
         "memory_type": "s3" if use_s3 else "local",
+        "ai_model": bedrock_model_id,
     }
 
 @app.get("/health")
@@ -133,6 +166,7 @@ async def health():
     return {
         "status": "healthy",
         "use_s3": use_s3,
+        "ai_model": bedrock_model_id,
     }
 
 @app.post("/chat")
@@ -141,20 +175,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
         is_new_session = request.session_id is None
         session_id = request.session_id or str(uuid.uuid4())
 
-        messages = [{"role": "system", "content": prompt()}]
-
         conversation = await asyncio.to_thread(load_conversation, session_id)
-        for message in conversation:
-            messages.append({"role": message["role"], "content": message["content"]})
 
-        messages.append({"role": "user", "content": request.message})
-
-        response = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-        )
-
-        assistant_message = response.choices[0].message.content or ""
+        assistant_message = await asyncio.to_thread(call_bedrock, conversation, request.message) or ""
 
         conversation.append({"role": "user", "content": request.message, "timestamp": datetime.now(timezone.utc).isoformat()})
         conversation.append({"role": "assistant", "content": assistant_message, "timestamp": datetime.now(timezone.utc).isoformat()})
