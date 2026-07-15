@@ -45,3 +45,11 @@ memory/
 # Deployment
 lambda-package/
 lambda-deployment.zip
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
