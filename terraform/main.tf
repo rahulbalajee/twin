@@ -8,6 +8,10 @@ locals {
 
   name_prefix = "${var.project_name}-${var.environment}"
 
+  # Foundation-model id behind the inference profile (strips geo prefix like
+  # "global." / "apac.") — used to scope the Lambda's invoke permission
+  bedrock_foundation_model = replace(var.bedrock_model_id, "/^(global|us|eu|apac)\\./", "")
+
   common_tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -97,14 +101,38 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_bedrock" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
-  role       = aws_iam_role.lambda_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_s3" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-  role       = aws_iam_role.lambda_role.name
+resource "aws_iam_role_policy" "lambda_permissions" {
+  name = "${local.name_prefix}-lambda-permissions"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "InvokeBedrockModel"
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+        ]
+        Resource = [
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/${var.bedrock_model_id}",
+          "arn:aws:bedrock:*::foundation-model/${local.bedrock_foundation_model}",
+        ]
+      },
+      {
+        Sid      = "ReadWriteMemoryObjects"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject"]
+        Resource = "${aws_s3_bucket.memory.arn}/*"
+      },
+      {
+        Sid      = "ListMemoryBucket"
+        Effect   = "Allow"
+        Action   = "s3:ListBucket"
+        Resource = aws_s3_bucket.memory.arn
+      },
+    ]
+  })
 }
 
 resource "aws_lambda_function" "api" {
@@ -117,6 +145,10 @@ resource "aws_lambda_function" "api" {
   architectures    = ["x86_64"]
   timeout          = var.lambda_timeout
   tags             = local.common_tags
+
+  # Hard cap on parallel executions — bounds worst-case Bedrock spend from
+  # request floods (cost guard, pairs with API Gateway throttling)
+  reserved_concurrent_executions = var.lambda_reserved_concurrency
   environment {
     variables = {
       CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
@@ -136,7 +168,7 @@ resource "aws_apigatewayv2_api" "main" {
     allow_credentials = false
     allow_headers     = ["*"]
     allow_methods     = ["GET", "POST", "OPTIONS"]
-    allow_origins     = ["*"]
+    allow_origins     = var.use_custom_domain ? ["https://${var.root_domain}", "https://www.${var.root_domain}"] : ["https://${aws_cloudfront_distribution.main.domain_name}"]
     max_age           = 300
   }
 }
@@ -173,18 +205,6 @@ resource "aws_apigatewayv2_route" "post_chat" {
 resource "aws_apigatewayv2_route" "get_health" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /health"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
-
-resource "aws_apigatewayv2_route" "get_sessions" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /sessions"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
-
-resource "aws_apigatewayv2_route" "get_conversation" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /conversation/{session_id}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 

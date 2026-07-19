@@ -8,6 +8,11 @@ output "cloudfront_url" {
   value       = "https://${aws_cloudfront_distribution.main.domain_name}"
 }
 
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution (used for cache invalidation on deploy)"
+  value       = aws_cloudfront_distribution.main.id
+}
+
 output "s3_frontend_bucket" {
   description = "Name of the S3 bucket for the frontend"
   value       = aws_s3_bucket.frontend.id

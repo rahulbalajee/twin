@@ -29,9 +29,15 @@ variable "bedrock_model_id" {
 }
 
 variable "lambda_timeout" {
-  description = "Lambda function timeout in seconds"
+  description = "Lambda function timeout in seconds (keep <= 30: API Gateway HTTP APIs cut the connection at ~30s)"
   type        = number
-  default     = 60
+  default     = 30
+}
+
+variable "lambda_reserved_concurrency" {
+  description = "Max concurrent Lambda executions (cost guard against request floods)"
+  type        = number
+  default     = 2
 }
 
 variable "api_throttle_burst_limit" {
