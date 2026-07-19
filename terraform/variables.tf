@@ -1,3 +1,9 @@
+variable "aws_region" {
+  description = "AWS region for all primary resources (Lambda, API Gateway, S3)"
+  type        = string
+  default     = "ap-south-1"
+}
+
 variable "project_name" {
   description = "Name prefix for all resources"
   type        = string
