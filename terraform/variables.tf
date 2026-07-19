@@ -28,6 +28,12 @@ variable "lambda_timeout" {
   default     = 60
 }
 
+variable "api_throttle_burst_limit" {
+  description = "API gateway throttle burst limit"
+  type        = number
+  default     = 10
+}
+
 variable "api_throttle_rate_limit" {
   description = "API gateway throttle rate limit"
   type        = number
