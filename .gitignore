@@ -47,9 +47,10 @@ lambda-package/
 lambda-deployment.zip
 
 # Terraform
-.terraform/
 *.tfstate
 *.tfstate.*
+.terraform/
+terraform.tfstate.d/
 *.tfvars
-*.tfvars.json
-crash.log
+!terraform.tfvars
+!prod.tfvars
