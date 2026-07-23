@@ -37,7 +37,7 @@ variable "lambda_timeout" {
 variable "lambda_reserved_concurrency" {
   description = "Max concurrent Lambda executions (cost guard against request floods)"
   type        = number
-  default     = 2
+  default     = 10
 }
 
 variable "api_throttle_burst_limit" {
