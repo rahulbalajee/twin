@@ -16,6 +16,10 @@ echo "Preparing to destroy $ENVIRONMENT environment for $PROJECT_NAME project"
 
 cd "$(dirname "$0")/../terraform"
 
+# Connect to the (S3) backend — required before any state-touching command,
+# and a fast no-op when already initialized
+terraform init -input=false
+
 if ! terraform workspace list | grep -qw "$ENVIRONMENT"; then
     echo "Error: Environment $ENVIRONMENT not found"
     echo "Available workspaces: $(terraform workspace list)"
