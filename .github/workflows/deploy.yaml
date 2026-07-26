@@ -1,0 +1,81 @@
+name: Deploy Twin
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "The environment to deploy to"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+permissions:
+  id-token: write # required for the OIDC token — without it AWS auth fails
+  contents: read
+
+# One deploy per environment at a time; queue (not cancel) the rest so a
+# half-applied terraform run is never interrupted
+concurrency:
+  group: deploy-${{ inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment || 'dev' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-twin-deploy
+          aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          # Must match the version used locally: terraform refuses to read
+          # state written by a newer version, so CI and laptop stay in lockstep
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run deploy script
+        run: ./scripts/deploy.sh ${{ inputs.environment || 'dev' }}
+
+      - name: Deployment summary
+        working-directory: ./terraform
+        run: |
+          terraform workspace select ${{ inputs.environment || 'dev' }}
+          echo "✅ Deployment complete!"
+          echo "🌐 CloudFront URL:  $(terraform output -raw cloudfront_url)"
+          echo "📡 API Gateway:     $(terraform output -raw api_gateway_url)"
+          echo "🪣 Frontend bucket: $(terraform output -raw s3_frontend_bucket)"
