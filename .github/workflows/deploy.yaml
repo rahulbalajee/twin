@@ -41,7 +41,9 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions-twin-deploy
-          aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+          # Not a secret — keep it readable in logs; must match the region in
+          # terraform (variables.tf default + backend block)
+          aws-region: ap-south-1
 
       - name: Set up Python
         uses: actions/setup-python@v5
