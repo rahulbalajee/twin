@@ -29,8 +29,12 @@ resource "aws_iam_role" "github_actions" {
 
   # The Condition block is the security boundary: without the sub claim check,
   # ANY GitHub repository's workflows could assume this role.
-  # Currently restricted to the main branch; to allow all branches/tags of the
-  # repo, switch sub to StringLike with "repo:${var.github_repository}:*".
+  #
+  # Jobs that declare `environment:` get sub claims in the form
+  # "repo:<owner/repo>:environment:<name>" (NOT "ref:refs/heads/<branch>"),
+  # so the allowlist below matches the deploy workflow's environments.
+  # Branch restriction is enforced GitHub-side via each environment's
+  # "deployment branches" rule (set to main only).
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -43,7 +47,11 @@ resource "aws_iam_role" "github_actions" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:${var.github_repository}:environment:dev",
+              "repo:${var.github_repository}:environment:test",
+              "repo:${var.github_repository}:environment:prod",
+            ]
           }
         }
       }
