@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    # Docs-only pushes don't need an infra cycle
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
   workflow_dispatch:
     inputs:
       environment:
