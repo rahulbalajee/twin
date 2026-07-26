@@ -11,6 +11,7 @@ node_modules/
 out/
 build/
 dist/
+*.log
 
 # Environment / secrets
 .env
@@ -54,3 +55,6 @@ terraform.tfstate.d/
 *.tfvars
 !terraform.tfvars
 !prod.tfvars
+
+# AWS
+.aws/
